@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostHog Snake Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1d1d1d 0%, #0d0d0d 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .game-container {
+            text-align: center;
+            padding: 20px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 123, 0, 0.2);
+            box-shadow: 0 20px 40px rgba(255, 123, 0, 0.1);
+        }
+        
+        .header {
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .hedgehog-logo {
+            width: 48px;
+            height: 48px;
+            background: #ff7b00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ff7b00;
+            margin: 0;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            color: #cccccc;
+            margin-top: 5px;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+        
+        .score-item {
+            background: rgba(255, 123, 0, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 123, 0, 0.3);
+        }
+        
+        .score-label {
+            font-size: 12px;
+            color: #cccccc;
+            margin-bottom: 2px;
+        }
+        
+        .score-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ff7b00;
+        }
+        
+        .game-canvas {
+            border: 2px solid #ff7b00;
+            border-radius: 12px;
+            background: #000000;
+            box-shadow: 0 0 30px rgba(255, 123, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        .game-button {
+            background: linear-gradient(135deg, #ff7b00 0%, #e55a00 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 123, 0, 0.3);
+        }
+        
+        .game-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 123, 0, 0.4);
+        }
+        
+        .game-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .instructions {
+            font-size: 12px;
+            color: #999999;
+            line-height: 1.4;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ff7b00;
+            text-align: center;
+            display: none;
+        }
+        
+        .game-over h2 {
+            color: #ff7b00;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .final-score {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(135deg, #ff7b00 0%, #e55a00 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="logo">
+                <div class="hedgehog-logo">🦔</div>
+                <div>
+                    <h1 class="title">HogSnake</h1>
+                    <p class="subtitle">Powered by PostHog Analytics</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="score-board">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">HIGH SCORE</div>
+                <div class="score-value" id="highScore">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">LEVEL</div>
+                <div class="score-value" id="level">1</div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" class="game-canvas" width="400" height="400"></canvas>
+        
+        <div class="controls">
+            <div></div>
+            <button id="startBtn" class="game-button">Start Game</button>
+            <div></div>
+        </div>
+        
+        <div class="instructions">
+            Use WASD or Arrow Keys to control your hedgehog<br>
+            Collect orange data points to grow and increase your analytics score!
+        </div>
+        
+        <div id="gameOverModal" class="game-over">
+            <h2>Game Over!</h2>
+            <p class="final-score">Final Score: <span id="finalScore">0</span></p>
+            <button id="restartBtn" class="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class PostHogSnakeGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.scoreElement = document.getElementById('score');
+                this.highScoreElement = document.getElementById('highScore');
+                this.levelElement = document.getElementById('level');
+                this.startBtn = document.getElementById('startBtn');
+                this.gameOverModal = document.getElementById('gameOverModal');
+                this.finalScoreElement = document.getElementById('finalScore');
+                this.restartBtn = document.getElementById('restartBtn');
+                
+                this.gridSize = 20;
+                this.tileCount = this.canvas.width / this.gridSize;
+                
+                this.snake = [{ x: 10, y: 10 }];
+                this.dx = 0;
+                this.dy = 0;
+                this.food = { x: 15, y: 15 };
+                this.score = 0;
+                this.level = 1;
+                this.gameRunning = false;
+                this.gameSpeed = 150;
+                
+                this.highScore = parseInt(localStorage.getItem('posthogSnakeHighScore') || '0');
+                this.highScoreElement.textContent = this.highScore;
+                
+                this.initEventListeners();
+                this.drawInitialState();
+            }
+            
+            initEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.restartBtn.addEventListener('click', () => this.restartGame());
+                
+                document.addEventListener('keydown', (e) => {
+                    if (!this.gameRunning) return;
+                    
+                    switch(e.key.toLowerCase()) {
+                        case 'arrowup':
+                        case 'w':
+                            if (this.dy === 0) { this.dx = 0; this.dy = -1; }
+                            break;
+                        case 'arrowdown':
+                        case 's':
+                            if (this.dy === 0) { this.dx = 0; this.dy = 1; }
+                            break;
+                        case 'arrowleft':
+                        case 'a':
+                            if (this.dx === 0) { this.dx = -1; this.dy = 0; }
+                            break;
+                        case 'arrowright':
+                        case 'd':
+                            if (this.dx === 0) { this.dx = 1; this.dy = 0; }
+                            break;
+                    }
+                });
+            }
+            
+            startGame() {
+                this.gameRunning = true;
+                this.startBtn.disabled = true;
+                this.startBtn.textContent = 'Playing...';
+                this.dx = 1;
+                this.dy = 0;
+                this.gameLoop();
+            }
+            
+            restartGame() {
+                this.snake = [{ x: 10, y: 10 }];
+                this.dx = 0;
+                this.dy = 0;
+                this.score = 0;
+                this.level = 1;
+                this.gameSpeed = 150;
+                this.gameRunning = false;
+                this.startBtn.disabled = false;
+                this.startBtn.textContent = 'Start Game';
+                this.gameOverModal.style.display = 'none';
+                this.generateFood();
+                this.updateUI();
+                this.drawInitialState();
+            }
+            
+            gameLoop() {
+                if (!this.gameRunning) return;
+                
+                setTimeout(() => {
+                    this.update();
+                    this.draw();
+                    this.gameLoop();
+                }, this.gameSpeed);
+            }
+            
+            update() {
+                const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
+                
+                // Check wall collision
+                if (head.x < 0 || head.x >= this.tileCount || head.y < 0 || head.y >= this.tileCount) {
+                    this.gameOver();
+                    return;
+                }
+                
+                // Check self collision
+                for (let segment of this.snake) {
+                    if (head.x === segment.x && head.y === segment.y) {
+                        this.gameOver();
+                        return;
+                    }
+                }
+                
+                this.snake.unshift(head);
+                
+                // Check food collision
+                if (head.x === this.food.x && head.y === this.food.y) {
+                    this.score += 10;
+                    this.level = Math.floor(this.score / 100) + 1;
+                    this.gameSpeed = Math.max(80, 150 - (this.level - 1) * 10);
+                    this.generateFood();
+                    this.updateUI();
+                } else {
+                    this.snake.pop();
+                }
+            }
+            
+            draw() {
+                // Clear canvas with dark background
+                this.ctx.fillStyle = '#000000';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw grid pattern
+                this.ctx.strokeStyle = 'rgba(255, 123, 0, 0.1)';
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i < this.tileCount; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i * this.gridSize, 0);
+                    this.ctx.lineTo(i * this.gridSize, this.canvas.height);
+                    this.ctx.stroke();
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i * this.gridSize);
+                    this.ctx.lineTo(this.canvas.width, i * this.gridSize);
+                    this.ctx.stroke();
+                }
+                
+                // Draw snake
+                this.snake.forEach((segment, index) => {
+                    if (index === 0) {
+                        // Draw hedgehog head
+                        this.ctx.fillStyle = '#ff7b00';
+                        this.ctx.fillRect(segment.x * this.gridSize + 2, segment.y * this.gridSize + 2, 
+                                         this.gridSize - 4, this.gridSize - 4);
+                        
+                        // Add hedgehog spikes effect
+                        this.ctx.fillStyle = '#ffaa44';
+                        this.ctx.fillRect(segment.x * this.gridSize + 4, segment.y * this.gridSize + 4, 
+                                         this.gridSize - 8, this.gridSize - 8);
+                        
+                        // Draw eyes
+                        this.ctx.fillStyle = '#000000';
+                        this.ctx.fillRect(segment.x * this.gridSize + 6, segment.y * this.gridSize + 6, 2, 2);
+                        this.ctx.fillRect(segment.x * this.gridSize + 12, segment.y * this.gridSize + 6, 2, 2);
+                    } else {
+                        // Draw body segments with gradient
+                        const alpha = 1 - (index * 0.1);
+                        this.ctx.fillStyle = `rgba(255, 123, 0, ${Math.max(alpha, 0.3)})`;
+                        this.ctx.fillRect(segment.x * this.gridSize + 3, segment.y * this.gridSize + 3, 
+                                         this.gridSize - 6, this.gridSize - 6);
+                        
+                        // Add inner glow
+                        this.ctx.fillStyle = `rgba(255, 170, 68, ${Math.max(alpha * 0.5, 0.2)})`;
+                        this.ctx.fillRect(segment.x * this.gridSize + 5, segment.y * this.gridSize + 5, 
+                                         this.gridSize - 10, this.gridSize - 10);
+                    }
+                });
+                
+                // Draw food (data point)
+                this.ctx.fillStyle = '#ff7b00';
+                this.ctx.beginPath();
+                this.ctx.arc(this.food.x * this.gridSize + this.gridSize/2, 
+                           this.food.y * this.gridSize + this.gridSize/2, 
+                           this.gridSize/3, 0, 2 * Math.PI);
+                this.ctx.fill();
+                
+                // Add pulsing effect to food
+                this.ctx.fillStyle = 'rgba(255, 123, 0, 0.5)';
+                this.ctx.beginPath();
+                this.ctx.arc(this.food.x * this.gridSize + this.gridSize/2, 
+                           this.food.y * this.gridSize + this.gridSize/2, 
+                           this.gridSize/2, 0, 2 * Math.PI);
+                this.ctx.fill();
+            }
+            
+            drawInitialState() {
+                this.ctx.fillStyle = '#000000';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw welcome message
+                this.ctx.fillStyle = 'rgba(255, 123, 0, 0.3)';
+                this.ctx.font = '20px Inter';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText('Ready to collect some data?', 
+                                this.canvas.width/2, this.canvas.height/2 - 20);
+                
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                this.ctx.font = '14px Inter';
+                this.ctx.fillText('Click Start Game to begin!', 
+                                this.canvas.width/2, this.canvas.height/2 + 10);
+            }
+            
+            generateFood() {
+                let foodPosition;
+                do {
+                    foodPosition = {
+                        x: Math.floor(Math.random() * this.tileCount),
+                        y: Math.floor(Math.random() * this.tileCount)
+                    };
+                } while (this.snake.some(segment => 
+                    segment.x === foodPosition.x && segment.y === foodPosition.y));
+                
+                this.food = foodPosition;
+            }
+            
+            updateUI() {
+                this.scoreElement.textContent = this.score;
+                this.levelElement.textContent = this.level;
+                
+                if (this.score > this.highScore) {
+                    this.highScore = this.score;
+                    this.highScoreElement.textContent = this.highScore;
+                    localStorage.setItem('posthogSnakeHighScore', this.highScore.toString());
+                }
+            }
+            
+            gameOver() {
+                this.gameRunning = false;
+                this.startBtn.disabled = false;
+                this.startBtn.textContent = 'Start Game';
+                this.finalScoreElement.textContent = this.score;
+                this.gameOverModal.style.display = 'block';
+            }
+        }
+        
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            new PostHogSnakeGame();
+        });
+    </script>
+</body>
+</html>
