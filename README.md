@@ -1,6 +1,7 @@
-# 🦔 HogSnake - The Ultimate Data-Driven Snake Game (https://travislima.github.io/posthog-game/)
+# 🦔 HogSnake - The Ultimate Data-Driven Snake Game 
 
-Because who says analytics can't be fun?
+(https://travislima.github.io/posthog-game/)
+
 
 Welcome to HogSnake, where PostHog's beloved hedgehog mascot slithers through the digital realm, collecting precious data points and growing stronger with every analytics insight!
 🎮 What's This All About?
