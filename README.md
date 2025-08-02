@@ -1,4 +1,4 @@
-#🦔 HogSnake - The Ultimate Data-Driven Snake Game (https://travislima.github.io/posthog-game/)
+# 🦔 HogSnake - The Ultimate Data-Driven Snake Game (https://travislima.github.io/posthog-game/)
 
 Because who says analytics can't be fun?
 
